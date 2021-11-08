@@ -1,10 +1,11 @@
 package leaderelection;
 
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
+import org.apache.zookeeper.data.Stat;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Node:- A process running on a dedicated machine as part of a distributed system, when two nodes have an edge between them,
@@ -50,20 +51,61 @@ import java.io.IOException;
  * This is how we break the symmetry and arrive to a global agreement on the leader node
  */
 
+// Fault Tolerance and Horizontal Scalability are very important properties
+
 public class LeaderElection implements Watcher {
     private static final String ZOOKEEPER_ADDRESS = "localhost:2181";
     private static final int SESSION_TIMEOUT = 3000;
+    private static final String ELECTION_NAMESPACE = "/election";
     private ZooKeeper zooKeeper;
+    private String currentZnodeName;
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException, InterruptedException, KeeperException {
         LeaderElection leaderElection = new LeaderElection();
         leaderElection.connectToZooKeeper();
+
+        leaderElection.volunteerForLeadership();
+        leaderElection.reelectLeader();
+
         leaderElection.run(); // zooKeeper is event driven, the events from zooKeeper come on a different thread and
         // before zooKeeper even has a chance to respond to our application and trigger an event on another thread
         // our application simply finishes. Therefore, put the main thread into a wait state.
 
         leaderElection.close(); // once the main thread wakes up and exits the run method, it will call the close method
         System.out.println("Disconnected from ZooKeeper, exiting application");
+    }
+
+    public void volunteerForLeadership() throws InterruptedException, KeeperException {
+        String znodePrefix = ELECTION_NAMESPACE + "/c_";
+        String znodeFullPath = zooKeeper.create(znodePrefix, new byte[]{}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+        System.out.println("Znode name: " + znodeFullPath);
+        this.currentZnodeName = znodeFullPath.replace(ELECTION_NAMESPACE + "/", "");
+    }
+
+    public void reelectLeader() throws InterruptedException, KeeperException {
+        Stat predecessorStat = null;
+        String predecessorZnodeName = "";
+        while (predecessorStat == null) {
+            // repeat the process as long as we are not elected to be a leader or until we found an existing Znode to watch for failures
+            List<String> children = zooKeeper.getChildren(ELECTION_NAMESPACE, false);
+
+            Collections.sort(children);
+            String smallestChild = children.get(0);
+
+            if (smallestChild.equals(currentZnodeName)) {
+                System.out.println("I am the leader");
+                return;
+            } else {
+                System.out.println("I am not the leader, " + smallestChild + " is the leader");
+                int predecessorIndex = Collections.binarySearch(children, currentZnodeName) - 1;
+                predecessorZnodeName = children.get(predecessorIndex);
+                // Race Condition - if we call exists() on a Znode that is already gone the return value of the exists() method is going to be null
+                predecessorStat = zooKeeper.exists(ELECTION_NAMESPACE + "/" + predecessorZnodeName, this); // watcher object will get notified if and when the predecessor Znode gets deleted
+            }
+        }
+
+        System.out.println("Watching znode " + predecessorZnodeName);
+        System.out.println();
     }
 
     public void connectToZooKeeper() throws IOException {
@@ -93,6 +135,13 @@ public class LeaderElection implements Watcher {
                         System.out.println("Disconnected from ZooKeeper event");
                         zooKeeper.notifyAll();
                     }
+                }
+                break;
+            case NodeDeleted:
+                try {
+                    reelectLeader();
+                } catch (InterruptedException | KeeperException e) {
+                    e.printStackTrace();
                 }
         }
     }
