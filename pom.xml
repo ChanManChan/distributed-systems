@@ -40,7 +40,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>leaderelection/LeaderElection</mainClass>
+                            <mainClass>cluster/management/Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

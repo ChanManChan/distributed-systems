@@ -1,4 +1,4 @@
-package leaderelection;
+package cluster.management;
 
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
@@ -53,7 +53,7 @@ import java.util.List;
 
 // Fault Tolerance and Horizontal Scalability are very important properties
 
-public class LeaderElection implements Watcher {
+public class LeaderElectionExample implements Watcher {
     private static final String ZOOKEEPER_ADDRESS = "localhost:2181";
     private static final int SESSION_TIMEOUT = 3000;
     private static final String ELECTION_NAMESPACE = "/election";
@@ -61,17 +61,17 @@ public class LeaderElection implements Watcher {
     private String currentZnodeName;
 
     public static void main(String[] args) throws IOException, InterruptedException, KeeperException {
-        LeaderElection leaderElection = new LeaderElection();
-        leaderElection.connectToZooKeeper();
+        LeaderElectionExample leaderElectionExample = new LeaderElectionExample();
+        leaderElectionExample.connectToZooKeeper();
 
-        leaderElection.volunteerForLeadership();
-        leaderElection.reelectLeader();
+        leaderElectionExample.volunteerForLeadership();
+        leaderElectionExample.reelectLeader();
 
-        leaderElection.run(); // zooKeeper is event driven, the events from zooKeeper come on a different thread and
+        leaderElectionExample.run(); // zooKeeper is event driven, the events from zooKeeper come on a different thread and
         // before zooKeeper even has a chance to respond to our application and trigger an event on another thread
         // our application simply finishes. Therefore, put the main thread into a wait state.
 
-        leaderElection.close(); // once the main thread wakes up and exits the run method, it will call the close method
+        leaderElectionExample.close(); // once the main thread wakes up and exits the run method, it will call the close method
         System.out.println("Disconnected from ZooKeeper, exiting application");
     }
 
