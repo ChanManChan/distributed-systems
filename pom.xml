@@ -23,8 +23,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>11</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -40,7 +39,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>cluster/management/Application</mainClass>
+                            <mainClass>network/communication/client/Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
