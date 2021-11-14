@@ -30,7 +30,7 @@ Exactly Once delivery semantics, but it is very hard to achieve and sometimes is
 The client sends a request to the server only once. If the server never receives a response or the server crashes right
 before it sends back the response the client will never redeliver the request to the server.
 
-_Worst case_:- The action may never get performed by the server
+_Worst case_:- The action may never get performed by the server </br>
 _Best case_:- The action is performed only once
 
 **_Use cases_**-
