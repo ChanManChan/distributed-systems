@@ -42,6 +42,24 @@ automatically serialized except for:
 For successful deserialization of the object on the recipients end the class definition has to match between the sender
 and the receiver. The class has to have an accessible no-args constructor.
 
+```Java
+class Example {
+    public byte[] serialize(Data data) {
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        ObjectOutput objectOutput = new ObjectOutputStream(byteStream);
+        objectOutput.writeObject(data);
+        objectOutput.flush(); // <- flush the stream to force the serialization
+        return byteStream.toByteArray();
+    }
+
+    public Data deserialize(byte[] data) {
+        ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
+        ObjectInput objectOutput = new ObjectInputStream(byteStream);
+        return (Data) byteStream.readObject(); // <- deserialize our data back to a Java object
+    }
+}
+```
+
 **Advantages:**
 
 1. Guarantees about correct state reconstruction without any type ambiguity
@@ -56,6 +74,28 @@ and deserialization methods. The Proto Compiler will generate a class for any la
 in our program. Using this operation between the schema definition in a proto file and the generated language specific
 stubs, the message definition stays language independent but the applications written in different languages can use
 their own language specific classes, types and methods directly.
+
+```
+syntax = "proto2"
+
+message Task {
+   required string city = 1;
+   repeated Date date_range = 2;
+   repeated string categories = 3;
+   repeated int64 age_range = 4;
+   optional bool debug = 5;
+   
+   message Date {
+      required uint32 day = 1;
+      required uint32 month = 2;
+      required uint32 year = 3;
+   }
+}
+```
+
+After this proto file goes through the Proto Compiler we get a Java class that contains regular getter methods plus the
+helper methods to serialize and deserialize the object to and from a byte array. This allows us to use this auto
+generated class just like a regular class we wrote ourselves.
 
 **Advantages:**
 
