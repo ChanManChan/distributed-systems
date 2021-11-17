@@ -134,11 +134,31 @@ for(Document doc : documents) {
 sort(documents, by score) -> list of relevant documents
 ```
 
-The more important terms are weight higher and the term that appear everywhere will be simply ignored. TF-IDF is a
+The more important terms are weighted higher and the term that appear everywhere will be simply ignored. TF-IDF is a
 statistical algorithm and requires a large enough set of documents to give good results.
 
 **Example:** <br/>
 
-We have two documents containing the word "Car" 
+We have two documents containing the word "Car" and we have two documents in total. <br />
+Then the inverse document frequency of that term is going to be zero (log(2/2) = log(1) = 0)
+So we have no idea which of those documents is more relevant
 
+|                        |  Articles about Cars (500 words)  | Long book about Food (500,000 words) |
+|:---------------------- |:---------------------------------:|-------------------------------------:|
+| count                  | 50                                | 60                                   |
+| Term Frequency         | 50/500 = 0.1 (10%)                | 60 / 500,000 = 0.00012 (0.012%)      |
+| Inverse Term Frequency | log(2/2) = log(1) = 0             | log(2/2) = log(1) = 0                |
+| Score                  | tf * itf = 0                      | tf * itf = 0                         |
 
+However, if we have 100 documents, and those same two documents are still the only ones containing the word "Car", then
+the inverse document frequency of that term is not going to be zero.
+
+|                        |  Articles about Cars (500 words)  | Long book about Food (500,000 words) | ... | ... | ... |
+|:---------------------- |:---------------------------------:|-------------------------------------:| --- | --- | --- |
+| count                  | 50                                | 60                                   | 0   | 0   | 0   |
+| Term Frequency         | 50/500 = 0.1 (10%)                | 60 / 500,000 = 0.00012 (0.012%)      | 0   | 0   | 0   |
+| Inverse Term Frequency | log(100/2) = log(50) = 1.7        | log(100/2) = log(50) = 1.7           | 1.7 | 1.7 | 1.7 | 
+| Score                  | tf * itf = 0.1 * 1.7 = 0.17       | tf * itf = 0.012 * 1.7 = 0.000204    | 0   | 0   | 0   |
+
+Now we know the short article about cars is more relevant than the long book about food. The algorithm works well with
+high number of documents and is highly parallelizable, it is perfect fit for building a distributed system. 
