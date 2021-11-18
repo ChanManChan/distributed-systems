@@ -22,7 +22,7 @@ public class TFIDF {
         DocumentData documentData = new DocumentData();
 
         for (String term : terms) {
-            double termFreq = calculateTermFrequency(words, term);
+            double termFreq = calculateTermFrequency(words, term); // number of occurrences / total words
             documentData.putTermFrequency(term, termFreq);
         }
 
@@ -32,11 +32,11 @@ public class TFIDF {
     private static double getInverseDocumentFrequency(String term, Map<String, DocumentData> documentResults) { // calculating IDF for a single search term
         // nt - number of documents that contain the given term
         double nt = 0;
-        for (String document : documentResults.keySet()) { // go through all the documents and count how many of them contains at least one occurrence of each search term.
+        for (String document : documentResults.keySet()) { // go through all the documents and count how many of them contains at least one occurrence of this search term.
             DocumentData documentData = documentResults.get(document);
             double termFrequency = documentData.getFrequency(term);
             if (termFrequency > 0.0) {
-                // if the document contains the search term, increment the number of documents that contain the given search term
+                // if the document contains the search term, increment the number of documents that contain the given search term by one
                 nt++;
             }
         }
