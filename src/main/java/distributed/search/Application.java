@@ -16,7 +16,6 @@ public class Application implements Watcher {
     public static void main(String[] args) throws IOException, InterruptedException, KeeperException {
         int currentServerPort = args.length == 1 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
         Application application = new Application();
-
         ZooKeeper zooKeeper = application.connectToZooKeeper();
 
         ServiceRegistry workersServiceRegistry = new ServiceRegistry(zooKeeper, ServiceRegistry.WORKERS_REGISTRY_ZNODE);

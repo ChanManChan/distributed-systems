@@ -1,11 +1,13 @@
 package distributed.search;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class Task {
+// Represents the search task sent to the worker node from the search cluster coordinator
+public class Task implements Serializable {
     private final List<String> searchTerms;
-    private final List<String> documents;
+    private final List<String> documents; // subset of documents allocated to this particular worker node
 
     public Task(List<String> searchTerms, List<String> documents) {
         this.searchTerms = searchTerms;
