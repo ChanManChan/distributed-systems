@@ -9,8 +9,8 @@ import java.util.List;
 
 /**
  * Service Registry with Zookeeper:-
- * Upon connection to zookeeper, each node is going to create an ephemeral znode under the service registry parent and store its address in it's znode for others to see.
- * Then any node that is interested in getting the address of another node simple needs to call getChildren() to get all the existing znode under the service registry and then call the getData() method to read the address inside the znode.
+ * Upon connection to zookeeper, each node is going to create an ephemeral zNode under the service registry parent and store its address in it's zNode for others to see.
+ * Then any node that is interested in getting the address of another node simple needs to call getChildren() to get all the existing zNode under the service registry and then call the getData() method to read the address inside the zNode.
  * We need to store the minimum data to allow communication within the cluster
  * The address we will store will be in the form of:
  * Host Name:Port
