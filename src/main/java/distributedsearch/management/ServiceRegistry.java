@@ -1,4 +1,4 @@
-package distributed.search;
+package distributedsearch.management;
 
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;

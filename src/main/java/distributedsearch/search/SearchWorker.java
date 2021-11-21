@@ -1,4 +1,10 @@
-package distributed.search;
+package distributedsearch.search;
+
+import distributedsearch.model.DocumentData;
+import distributedsearch.model.Result;
+import distributedsearch.model.SerializationUtils;
+import distributedsearch.model.Task;
+import distributedsearch.networking.OnRequestCallback;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -7,8 +13,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static distributed.search.TFIDF.getWordsFromDocument;
-import static distributed.search.TFIDF.populateTermToTermFrequencyMap;
+import static distributedsearch.search.TFIDF.getWordsFromDocument;
+import static distributedsearch.search.TFIDF.populateTermToTermFrequencyMap;
 
 public class SearchWorker implements OnRequestCallback {
     private static final String ENDPOINT = "/task";

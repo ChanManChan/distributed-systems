@@ -1,5 +1,8 @@
-package distributed.search;
+package distributedsearch;
 
+import distributedsearch.management.LeaderElection;
+import distributedsearch.management.OnElectionAction;
+import distributedsearch.management.ServiceRegistry;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -18,8 +21,11 @@ public class Application implements Watcher {
         Application application = new Application();
         ZooKeeper zooKeeper = application.connectToZooKeeper();
 
+        // the only difference between the worker service registry and the coordinator service registry is the ZNode
+        // name we pass into the constructor which tells the service registry where to store the addresses
         ServiceRegistry workersServiceRegistry = new ServiceRegistry(zooKeeper, ServiceRegistry.WORKERS_REGISTRY_ZNODE);
-        OnElectionAction onElectionAction = new OnElectionAction(workersServiceRegistry, currentServerPort);
+        ServiceRegistry coordinatorsServiceRegistry = new ServiceRegistry(zooKeeper, ServiceRegistry.COORDINATORS_REGISTRY_ZNODE);
+        OnElectionAction onElectionAction = new OnElectionAction(workersServiceRegistry, coordinatorsServiceRegistry, currentServerPort);
 
         LeaderElection leaderElection = new LeaderElection(zooKeeper, onElectionAction);
         leaderElection.volunteerForLeadership();

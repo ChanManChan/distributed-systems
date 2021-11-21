@@ -1,4 +1,4 @@
-package distributed.search;
+package distributedsearch.networking;
 
 public interface OnRequestCallback {
     byte[] handleRequest(byte[] requestPayload);

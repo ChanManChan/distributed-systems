@@ -1,4 +1,4 @@
-package distributed.search;
+package distributedsearch.networking;
 
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpExchange;
@@ -38,6 +38,25 @@ public class WebServer {
         server.start();
     }
 
+    private void handleRequestForAsset(HttpExchange exchange) throws IOException {
+        if (exchange.getRequestMethod().equalsIgnoreCase("get")) {
+            exchange.close();
+            return;
+        }
+
+        byte[] response;
+        String asset = exchange.getRequestURI().getPath();
+
+        if (asset.equals(HOME_PAGE_ENDPOINT)) {
+            response = readUIAsset(HOME_PAGE_UI_ASSETS_BASE_DIR + "index.html");
+        } else {
+            response = readUIAsset(asset);
+        }
+
+        addContentType(asset, exchange);
+        sendResponse(response, exchange);
+    }
+
     private void handleTaskRequest(HttpExchange exchange) throws IOException {
         if (!exchange.getRequestMethod().equalsIgnoreCase("post")) {
             exchange.close();
@@ -64,5 +83,9 @@ public class WebServer {
         outputStream.write(responseBytes);
         outputStream.flush();
         outputStream.close();
+    }
+
+    public void stop() {
+        server.stop(10);
     }
 }

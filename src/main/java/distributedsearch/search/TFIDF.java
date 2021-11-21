@@ -1,4 +1,6 @@
-package distributed.search;
+package distributedsearch.search;
+
+import distributedsearch.model.DocumentData;
 
 import java.util.*;
 

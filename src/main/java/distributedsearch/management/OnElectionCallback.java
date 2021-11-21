@@ -1,4 +1,4 @@
-package distributed.search;
+package distributedsearch.management;
 
 public interface OnElectionCallback {
     void onElectedToBeLeader();
