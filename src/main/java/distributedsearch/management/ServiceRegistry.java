@@ -6,6 +6,7 @@ import org.apache.zookeeper.data.Stat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 public class ServiceRegistry implements Watcher {
     public static final String WORKERS_REGISTRY_ZNODE = "/workers_service_registry";
@@ -14,10 +15,12 @@ public class ServiceRegistry implements Watcher {
     private List<String> allServiceAddresses = null;
     private String currentZNode = null;
     private final String serviceRegistryZNode;
+    private final Random random;
 
     public ServiceRegistry(ZooKeeper zooKeeper, String serviceRegistryZNode) {
         this.zooKeeper = zooKeeper;
         this.serviceRegistryZNode = serviceRegistryZNode;
+        this.random = new Random();
         createServiceRegistryNode();
     }
 
@@ -63,6 +66,18 @@ public class ServiceRegistry implements Watcher {
             updateAddresses();
         }
         return allServiceAddresses;
+    }
+
+    public synchronized String getRandomServiceAddress() throws InterruptedException, KeeperException {
+        if (allServiceAddresses == null) {
+            updateAddresses();
+        }
+        if (!allServiceAddresses.isEmpty()) {
+            int randomIndex = random.nextInt(allServiceAddresses.size());
+            return allServiceAddresses.get(randomIndex);
+        } else {
+            return null;
+        }
     }
 
     private synchronized void updateAddresses() throws InterruptedException, KeeperException {

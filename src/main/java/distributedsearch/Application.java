@@ -3,6 +3,8 @@ package distributedsearch;
 import distributedsearch.management.LeaderElection;
 import distributedsearch.management.OnElectionAction;
 import distributedsearch.management.ServiceRegistry;
+import distributedsearch.networking.WebServer;
+import distributedsearch.search.UserSearchHandler;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -14,10 +16,14 @@ public class Application implements Watcher {
     private static final String ZOOKEEPER_ADDRESS = "localhost:2181";
     private static final int SESSION_TIMEOUT = 3000;
     private static final int DEFAULT_PORT = 8080;
+    private static final String BACK_END = "back-end";
+    private static final String FRONT_END = "front-end";
+    private static final String DEFAULT_TYPE = BACK_END;
     private ZooKeeper zooKeeper;
 
     public static void main(String[] args) throws IOException, InterruptedException, KeeperException {
-        int currentServerPort = args.length == 1 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
+        int currentServerPort = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
+        String type = args.length > 0 ? args[1] : DEFAULT_TYPE;
         Application application = new Application();
         ZooKeeper zooKeeper = application.connectToZooKeeper();
 
@@ -25,11 +31,17 @@ public class Application implements Watcher {
         // name we pass into the constructor which tells the service registry where to store the addresses
         ServiceRegistry workersServiceRegistry = new ServiceRegistry(zooKeeper, ServiceRegistry.WORKERS_REGISTRY_ZNODE);
         ServiceRegistry coordinatorsServiceRegistry = new ServiceRegistry(zooKeeper, ServiceRegistry.COORDINATORS_REGISTRY_ZNODE);
-        OnElectionAction onElectionAction = new OnElectionAction(workersServiceRegistry, coordinatorsServiceRegistry, currentServerPort);
 
-        LeaderElection leaderElection = new LeaderElection(zooKeeper, onElectionAction);
-        leaderElection.volunteerForLeadership();
-        leaderElection.reelectLeader();
+        if (type.equals(FRONT_END)) {
+            UserSearchHandler searchHandler = new UserSearchHandler(coordinatorsServiceRegistry);
+            WebServer webServer = new WebServer(currentServerPort, searchHandler);
+            webServer.startServer();
+        } else if (type.equals(BACK_END)) {
+            OnElectionAction onElectionAction = new OnElectionAction(workersServiceRegistry, coordinatorsServiceRegistry, currentServerPort);
+            LeaderElection leaderElection = new LeaderElection(zooKeeper, onElectionAction);
+            leaderElection.volunteerForLeadership();
+            leaderElection.reelectLeader();
+        }
 
         application.run();
         application.close();
