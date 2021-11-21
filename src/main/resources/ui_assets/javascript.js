@@ -13,6 +13,9 @@ $( document ).ready(function() {
 
     // handle search click
     button.on("click", function(){
+        button.text("Loading...");
+        button.attr("disabled", true);
+        button.addClass("loading");
         banner.addClass("alt");
 
         // send request to the server
@@ -56,6 +59,9 @@ $( document ).ready(function() {
         } else {
             alert("Error connecting to the server " + status);
         }
+        button.text("Search");
+        button.attr("disabled", false);
+        button.removeClass("loading");
     }
 
     /*

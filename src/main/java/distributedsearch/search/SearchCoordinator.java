@@ -22,7 +22,7 @@ import static distributedsearch.search.TFIDF.getWordsFromLine;
 
 public class SearchCoordinator implements OnRequestCallback {
     private static final String ENDPOINT = "/search";
-    private static final String BOOKS_DIRECTORY = "src/main/resources/books";
+    private static final String BOOKS_DIRECTORY = "D:\\Spring\\distributed-systems\\src\\main\\resources\\books";
     private final ServiceRegistry workersServiceRegistry;
     private final WebClient client;
     private final List<String> documents;
@@ -98,8 +98,8 @@ public class SearchCoordinator implements OnRequestCallback {
 
     private static List<String> readDocumentsList() {
         File documentsDirectory = new File(BOOKS_DIRECTORY);
-        return Arrays.asList(documentsDirectory.list())
-                .stream()
+        String[] booksList = documentsDirectory.list();
+        return booksList == null ? Collections.emptyList() : Arrays.stream(booksList)
                 .map(documentName -> BOOKS_DIRECTORY + "/" + documentName)
                 .collect(Collectors.toList());
     }

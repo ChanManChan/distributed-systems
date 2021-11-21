@@ -15,7 +15,7 @@ import java.io.IOException;
 public class Application implements Watcher {
     private static final String ZOOKEEPER_ADDRESS = "localhost:2181";
     private static final int SESSION_TIMEOUT = 3000;
-    private static final int DEFAULT_PORT = 8080;
+    private static final int DEFAULT_PORT = 9090;
     private static final String BACK_END = "back-end";
     private static final String FRONT_END = "front-end";
     private static final String DEFAULT_TYPE = BACK_END;

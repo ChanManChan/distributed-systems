@@ -36,6 +36,11 @@ button {
   color: #fff;
 }
 
+#submit_button.loading {
+    background-color: #e6f3ff;
+    color: #000;
+}
+
 #banner-message.alt {
   background: #0084ff;
   color: #fff;

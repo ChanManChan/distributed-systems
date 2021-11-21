@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 public class WebServer {
     private static final String STATUS_ENDPOINT = "/status";
     private static final String HOME_PAGE_ENDPOINT = "/";
-    private static final String HOME_PAGE_UI_ASSETS_BASE_DIR = "/ui_assets";
+    private static final String HOME_PAGE_UI_ASSETS_BASE_DIR = "/ui_assets/";
     private final int port;
     private HttpServer server;
     private final OnRequestCallback onRequestCallback;
@@ -44,7 +44,7 @@ public class WebServer {
     }
 
     private void handleRequestForAsset(HttpExchange exchange) throws IOException {
-        if (exchange.getRequestMethod().equalsIgnoreCase("get")) {
+        if (!exchange.getRequestMethod().equalsIgnoreCase("get")) {
             exchange.close();
             return;
         }
@@ -65,7 +65,7 @@ public class WebServer {
     private byte[] readUIAsset(String asset) throws IOException {
         InputStream assetStream = getClass().getResourceAsStream(asset);
         if (assetStream == null) {
-            return new byte[]{};
+            return "nothing to display".getBytes();
         }
         return assetStream.readAllBytes();
     }

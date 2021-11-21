@@ -19,7 +19,7 @@ import java.util.List;
 public class UserSearchHandler implements OnRequestCallback {
     private static final String ENDPOINT = "/documents_search";
     private static final String DOCUMENTS_LOCATION = "books";
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper; // <- to deserialize incoming JSON objects and to serialize Java objects to JSON
     private final WebClient webClient;
     private final ServiceRegistry searchCoordinatorRegistry;
 

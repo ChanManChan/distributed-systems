@@ -49,7 +49,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>network/communication/client/Application</mainClass>
+                            <mainClass>distributedsearch/Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
