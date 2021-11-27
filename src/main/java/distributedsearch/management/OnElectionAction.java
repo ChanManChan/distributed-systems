@@ -24,8 +24,8 @@ public class OnElectionAction implements OnElectionCallback {
 
     @Override
     public void onElectedToBeLeader() {
-        workersServiceRegistry.unregisterFromCluster();
-        workersServiceRegistry.registerForUpdates();
+        workersServiceRegistry.unregisterFromCluster(); // new leader should unregister from the worker node pool
+        workersServiceRegistry.registerForUpdates(); // update the new list of worker node children under WORKERS_REGISTRY_ZNODE = "/workers_service_registry"
 
         if (webServer != null) {
             webServer.stop();
@@ -38,7 +38,9 @@ public class OnElectionAction implements OnElectionCallback {
         try {
             String currentServerAddress = String.format("http://%s:%d%s", InetAddress.getLocalHost().getCanonicalHostName(), port, searchCoordinator.getEndpoint());
             coordinatorsServiceRegistry.registerToCluster(currentServerAddress);
-        } catch (UnknownHostException | InterruptedException | KeeperException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (UnknownHostException | KeeperException e) {
             e.printStackTrace();
         }
     }
@@ -54,7 +56,9 @@ public class OnElectionAction implements OnElectionCallback {
         try {
             String currentServerAddress = String.format("http://%s:%d%s", InetAddress.getLocalHost().getCanonicalHostName(), port, searchWorker.getEndpoint());
             workersServiceRegistry.registerToCluster(currentServerAddress);
-        } catch (UnknownHostException | KeeperException | InterruptedException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (UnknownHostException | KeeperException e) {
             e.printStackTrace();
         }
     }

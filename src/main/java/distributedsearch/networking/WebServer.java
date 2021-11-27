@@ -85,7 +85,22 @@ public class WebServer {
             exchange.close();
             return;
         }
+        // For UserSearchHandler:-
+        // ENDPOINT = "/documents_search"
+        // receives search request from javascript code (front-end) to this endpoint
+        // this method handles "/documents_search" endpoint for UserSearchHandler
 
+        // For SearchCoordinator:-
+        // ENDPOINT = "/search"
+        // receives requests from UserSearchHandler to this endpoint
+        // this method handles "/search" endpoint for SearchCoordinator
+
+        // For SearchWorker:-
+        // ENDPOINT = "/task"
+        // receives requests from SearchCoordinator to this endpoint
+        // this method handles "/task" endpoint for SearchWorker
+
+        // implementation of handleRequest is different from SearchCoordinator, SearchWorker and UserSearchHandler
         byte[] responseBytes = onRequestCallback.handleRequest(exchange.getRequestBody().readAllBytes());
         sendResponse(responseBytes, exchange);
     }

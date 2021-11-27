@@ -48,9 +48,12 @@ public class SearchCoordinator implements OnRequestCallback {
         List<Result> results = new ArrayList<>();
         for (CompletableFuture<Result> future : futures) {
             try {
+                // result from one worker
                 Result result = future.get();
-                results.add(result);
-            } catch (InterruptedException | ExecutionException e) {
+                results.add(result); // accumulate result from all the worker nodes
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
                 e.printStackTrace();
             }
         }
@@ -79,17 +82,15 @@ public class SearchCoordinator implements OnRequestCallback {
      * @param documents       list of documents we currently have in the repository
      */
     private static List<List<String>> splitDocumentList(int numberOfWorkers, List<String> documents) {
-        int numberOfDocumentsPerWorker = (documents.size() + numberOfWorkers - 1) / numberOfWorkers;
+        // with Math.ceil, we can ensure that (numberOfWorker - 1) nodes will always get Math.ceil(numberOfDocuments/numberOfWorkers) documents to work with
+        // and the last worker will work with [0 <= x <= Math.ceil(numberOfDocuments/numberOfWorkers)] documents
+        int numberOfDocumentsPerWorker = (int) Math.ceil((double) documents.size() / numberOfWorkers);
         List<List<String>> workersDocuments = new ArrayList<>();
 
         for (int i = 0; i < numberOfWorkers; i++) {
             int firstDocumentIndex = i * numberOfDocumentsPerWorker;
             int lastDocumentIndexExclusive = Math.min(firstDocumentIndex + numberOfDocumentsPerWorker, documents.size());
-
-            if (firstDocumentIndex >= lastDocumentIndexExclusive) {
-                break;
-            }
-
+            // subset of documents for a worker node
             List<String> currentWorkerDocuments = new ArrayList<>(documents.subList(firstDocumentIndex, lastDocumentIndexExclusive));
             workersDocuments.add(currentWorkerDocuments);
         }
@@ -117,16 +118,17 @@ public class SearchCoordinator implements OnRequestCallback {
         }
 
         List<Task> tasks = createTasks(workers.size(), searchTerms);
-        List<Result> results = sendTasksToWorkers(workers, tasks);
+        List<Result> results = sendTasksToWorkers(workers, tasks); // accumulated result from all the worker nodes
         List<SearchModel.Response.DocumentStats> sortedDocuments = aggregateResults(results, searchTerms);
         searchResponse.addAllRelevantDocuments(sortedDocuments);
         return searchResponse.build();
     }
 
     private List<SearchModel.Response.DocumentStats> aggregateResults(List<Result> results, List<String> terms) {
-        Map<String, DocumentData> allDocumentsResults = new HashMap<>();
+        Map<String, DocumentData> allDocumentsResults = new HashMap<>(); // combined document to DocumentData mappings collected from all the worker nodes
 
-        for (Result result : results) {
+        for (Result result : results) { // result from each worker node
+            // Result contains multiple document to DocumentData mapping for a single worker node
             allDocumentsResults.putAll(result.getDocumentToDocumentData());
         }
 
@@ -136,7 +138,7 @@ public class SearchCoordinator implements OnRequestCallback {
     }
 
     private List<SearchModel.Response.DocumentStats> sortDocumentsByScore(Map<Double, List<String>> scoreToDocuments) {
-        List<SearchModel.Response.DocumentStats> sortedDocumentStatsList = new ArrayList<>();
+        List<SearchModel.Response.DocumentStats> sortedDocumentStatsList = new ArrayList<>(); // single list with all the documents, and it's respective score
 
         for (Map.Entry<Double, List<String>> docScorePair : scoreToDocuments.entrySet()) {
             double score = docScorePair.getKey();
@@ -158,13 +160,16 @@ public class SearchCoordinator implements OnRequestCallback {
     @Override
     public byte[] handleRequest(byte[] requestPayload) {
         try {
+            // Handle requests coming from UserSearchHandler (front-end)
             SearchModel.Request request = SearchModel.Request.parseFrom(requestPayload);
             SearchModel.Response response = createResponse(request);
             return response.toByteArray();
-        } catch (InvalidProtocolBufferException | InterruptedException | KeeperException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (InvalidProtocolBufferException | KeeperException e) {
             e.printStackTrace();
-            return SearchModel.Response.getDefaultInstance().toByteArray();
         }
+        return SearchModel.Response.getDefaultInstance().toByteArray();
     }
 
     @Override

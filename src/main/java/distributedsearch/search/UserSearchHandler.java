@@ -99,7 +99,10 @@ public class UserSearchHandler implements OnRequestCallback {
 
             byte[] payloadBody = webClient.sendTask(searchRequest.toByteArray(), coordinatorAddress).join();
             return SearchModel.Response.parseFrom(payloadBody);
-        } catch (InvalidProtocolBufferException | InterruptedException | KeeperException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return SearchModel.Response.getDefaultInstance();
+        } catch (InvalidProtocolBufferException | KeeperException e) {
             e.printStackTrace();
             return SearchModel.Response.getDefaultInstance();
         }
@@ -108,6 +111,8 @@ public class UserSearchHandler implements OnRequestCallback {
     @Override
     public byte[] handleRequest(byte[] requestPayload) {
         try {
+            // Handle requests from front-end javascript code.
+            // hands over the request to SearchCoordinator
             FrontendSearchRequest frontendSearchRequest = objectMapper.readValue(requestPayload, FrontendSearchRequest.class);
             FrontendSearchResponse frontendSearchResponse = createFrontendResponse(frontendSearchRequest);
             return objectMapper.writeValueAsBytes(frontendSearchResponse);

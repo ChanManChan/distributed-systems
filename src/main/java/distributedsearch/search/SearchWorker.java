@@ -7,8 +7,8 @@ import distributedsearch.model.Task;
 import distributedsearch.networking.OnRequestCallback;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 import static distributedsearch.search.TFIDF.getWordsFromDocument;
 import static distributedsearch.search.TFIDF.populateTermToTermFrequencyMap;
 
+// Worker node just goes through the given subset of documents that was given to it and calculates the term frequency for each search term within a particular document
+// The calculated Term to Term Frequency map for each document in the subset is then transferred to the search coordinator where further calculations happen.
 public class SearchWorker implements OnRequestCallback {
     private static final String ENDPOINT = "/task";
 
@@ -33,22 +35,24 @@ public class SearchWorker implements OnRequestCallback {
     }
 
     private List<String> parseWordsFromDocument(String document) {
-        try {
-            FileReader fileReader = new FileReader(document);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
+        try (FileReader fileReader = new FileReader(document);
+             BufferedReader bufferedReader = new BufferedReader(fileReader)) {
             List<String> lines = bufferedReader.lines().collect(Collectors.toList());
-            List<String> words = getWordsFromDocument(lines);
-            return words;
-        } catch (FileNotFoundException e) {
+            return getWordsFromDocument(lines);
+        } catch (IOException e) {
             return Collections.emptyList();
         }
     }
 
     @Override
     public byte[] handleRequest(byte[] requestPayload) {
+        // will always get request from the search coordinator
         Task task = (Task) SerializationUtils.deserialize(requestPayload);
-        Result result = createResult(task);
-        return SerializationUtils.serialize(result);
+        if (task != null) {
+            Result result = createResult(task);
+            return SerializationUtils.serialize(result);
+        }
+        return new byte[]{};
     }
 
     @Override

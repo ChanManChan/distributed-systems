@@ -28,7 +28,8 @@ public class TFIDF {
                 n++;
             }
         }
-        return n == 0 ? 0 : Math.log10(documentResults.size() / n);
+        // calculating the weight for a search term
+        return n == 0 ? 0 : Math.log10(documentResults.size() / n); // log10(Number of documents / Number of documents that contains the term)
     }
 
     // term to IDF mapping
@@ -75,14 +76,14 @@ public class TFIDF {
     }
 
     private static void addDocumentScoreToTreeMap(TreeMap<Double, List<String>> scoreToDoc, double score, String document) {
-        List<String> booksWithCurrentScore = scoreToDoc.get(score);
+        List<String> booksWithCurrentScore = scoreToDoc.get(score); // if already other documents are mapped under the same score
 
         if (booksWithCurrentScore == null) {
             booksWithCurrentScore = new ArrayList<>();
         }
 
         booksWithCurrentScore.add(document);
-        scoreToDoc.put(score, booksWithCurrentScore);
+        scoreToDoc.put(score, booksWithCurrentScore); // multiple documents with the same score is a possibility
     }
 
     // util methods ------------------------

@@ -36,7 +36,9 @@ public class ServiceRegistry implements Watcher {
     public void registerForUpdates() {
         try {
             updateAddresses();
-        } catch (InterruptedException | KeeperException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (KeeperException e) {
             e.printStackTrace();
         }
     }
@@ -46,7 +48,9 @@ public class ServiceRegistry implements Watcher {
             if (currentZNode != null && zooKeeper.exists(currentZNode, false) != null) {
                 zooKeeper.delete(currentZNode, -1);
             }
-        } catch (KeeperException | InterruptedException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (KeeperException e) {
             e.printStackTrace();
         }
     }
@@ -56,7 +60,9 @@ public class ServiceRegistry implements Watcher {
             if (zooKeeper.exists(serviceRegistryZNode, false) == null) {
                 zooKeeper.create(serviceRegistryZNode, new byte[]{}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
-        } catch (KeeperException | InterruptedException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (KeeperException e) {
             e.printStackTrace();
         }
     }
@@ -107,7 +113,9 @@ public class ServiceRegistry implements Watcher {
     public void process(WatchedEvent watchedEvent) {
         try {
             updateAddresses();
-        } catch (InterruptedException | KeeperException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (KeeperException e) {
             e.printStackTrace();
         }
     }

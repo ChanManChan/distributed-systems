@@ -54,7 +54,9 @@ public class LeaderElection implements Watcher {
             case NodeDeleted:
                 try {
                     reelectLeader();
-                } catch (InterruptedException | KeeperException e) {
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } catch (KeeperException e) {
                     e.printStackTrace();
                 }
                 break;

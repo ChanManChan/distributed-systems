@@ -12,6 +12,8 @@ import org.apache.zookeeper.ZooKeeper;
 
 import java.io.IOException;
 
+// application could be front-end or back-end depending on the cli arguments
+// the application could be worker, coordinator or the web client
 public class Application implements Watcher {
     private static final String ZOOKEEPER_ADDRESS = "localhost:2181";
     private static final int SESSION_TIMEOUT = 3000;
@@ -33,6 +35,8 @@ public class Application implements Watcher {
         ServiceRegistry coordinatorsServiceRegistry = new ServiceRegistry(zooKeeper, ServiceRegistry.COORDINATORS_REGISTRY_ZNODE);
 
         if (type.equals(FRONT_END)) {
+            // front-end just needs the address of the coordinator.
+            // the coordinator then communicates with worker nodes.
             UserSearchHandler searchHandler = new UserSearchHandler(coordinatorsServiceRegistry);
             WebServer webServer = new WebServer(currentServerPort, searchHandler);
             webServer.startServer();
@@ -55,7 +59,7 @@ public class Application implements Watcher {
 
     public void run() throws InterruptedException {
         synchronized (zooKeeper) {
-            zooKeeper.wait();
+            zooKeeper.wait(); // main thread will wait until it receives notifyAll() indication
         }
     }
 
