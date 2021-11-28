@@ -72,3 +72,83 @@ balancer can shut down some servers to save on running costs.
     * Open source solutions are available (HAProxy, Nginx)
 
 ![types of load balancers](load-balancers-2.png)
+
+### Load balancing strategies
+
+1. **Round Robin** <br />
+   Each server gets one request in each turn and once we send at least one request to each server, we start over.
+   Assuming all requests cause the same amount of load in any given server and that all the servers are identical, this
+   guarantees a uniform load distribution through our entire cluster. <br/>
+   ![uniform round robin](round-robin-uniform-load.jpg) <br/>
+2. **Weighted Round Robin** <br />
+   If some of our servers are more capable of taking higher load or if we intentionally want to direct more traffic to
+   some servers and less to others, we can use this strategy. We assign a higher weight to service we want to send more
+   requests relative to others. <br />
+   In the below example, the top server will receive only one out of every 10 incoming requests whereas the rest of the
+   servers are weighted 3 times higher, which would spread the remaining 90% of the traffic equally among those
+   servers. <br />
+   ![weighted round robin](round-robin-weighted.jpg) <br/>
+   Weighted round-robin can help not only if we have hardware asymmetry, but also if we want to release newer version of
+   our application software more gradually by upgrading only one of the servers to the new version and direct only a
+   small portion of the traffic to that staging host. Later when we are confident to roll this new version to the entire
+   cluster, we can upgrade the remaining servers but if something went wrong in this new version then the impact is
+   going to be much smaller. <br />
+   ![newer server version](round-robin-server-version.jpg) <br/>
+3. **Source IP Hash**
+    * Sometimes it's desired that the user continues communication with the same server
+    * _Examples:_
+        * Open Session - Maintaining online shopping cart state between connection loses or browser refresh
+        * Local Server Caching - Improving performance by
+            * Preloading data
+            * Caching data locally
+    * Requests from the same user should go to the same server throughout the entire session <br />
+      One way to achieve this session stickiness is by hashing the IP address of the user and used this hashed value to
+      determine what server to direct the request. Since the hash function is deterministic, requests from the same user
+      will always be directed to the same server.
+
+_Drawbacks of Statistical Load Balancing_ <br />
+We assumed that spreading the requests evenly would also spread the load evenly. However, that is not always the case.
+Not all users are using the system the same way and not all the requests require the same amount of resources. Getting
+the load balancing strategy wrong can have a cascading chain of failures in our system that can be very hard to recover
+from. <br />
+**Cascading Failure (Round Robin)** <br />
+If two of our servers are getting mostly simple GET requests for static pages, but the third server is getting a lot of
+POST requests that require heavy computations and talking to external services, it would quickly get overwhelmed and
+stop responding to health checks. This in turn would make the load balancer believe that, that server has gone offline
+so the load balancer will stop sending the server any more traffic. Now we end up in a situation where all the request
+that the load balancer is receiving would have to go to the remaining two servers. These remaining two servers will also
+get quickly overwhelmed which would cause our entire cluster to become unavailable.
+
+_Different Load on Servers problem_ <br />
+All the strategies we mentioned till now didn't take the actual load on the servers into account. If we have a range of
+resources requirements between different requests, the solution is to take a more active approach to monitoring servers'
+load.
+
+4. **Least Connections** <br />
+   Servers which already have many open connections are assumed to be more busy handling requests and therefore will
+   receive less additional requests than server that have fewer open connections. <br />
+   ![least connections](least-connections.jpg)
+5. **Weighted Response Time** <br />
+   Takes advantage of the periodic health check requests the load balancer sends to the servers and measures the time
+   each server takes to respond. If the server is busy handling real requests, it would take it longer to respond to
+   those health checks which would give the server a lower weight in the load balancing algorithm.
+   ![weighted response](weighted-response.jpg)
+6. **Agent Based Policy** <br />
+   More active approach by installing a special agent program on each of the application servers. This agent background
+   process can measure the CPU utilization, Inbound or outbound Network Traffic(bytes), Disk Operations (Reads/Writes),
+   Memory Utilization... Others custom metrics. These agents can report those metrics in real time to the load balancer
+   which will help it make the most informed decisions regarding the best way direct the traffic to our application
+   nodes. <br />
+   ![agent based policy](agent-based-policy.jpg)
+
+**Example**
+
+1. Our Layer 7 (HTTP) Load Balancer is directing user traffic to a backend service, consisting of 4 identical servers.
+   The Load Balancer is configured to operate in the Weighted Round Robin Strategy. The weights are:
+    * Server 1: 1
+    * Server 2: 1
+    * Server 3: 3
+    * Server 4: 5 <br />
+      For every 30 incoming requests to the load balancer. How many requests would be forwarded to server 3? <br />
+      For every 10 requests, Server 3 receives 3 requests. Therefore, for 30 incoming requests to the load
+      balancer,server 3 will receiver 9 requests.
