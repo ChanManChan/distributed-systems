@@ -51,7 +51,7 @@ _Could Auto-Scaling with load balancers-_ <br />
 In a cloud environment machines can be added on demand. A load balancer can provide auto-scaling/down-scaling
 capabilities.
 
-![load balancers in distributed system](load-balancers-1.png)
+![load balancers in distributed system](assets/load-balancers-1.png)
 
 **For Example**:- <br />
 A load balancer detected the load on our server reached a high threshold at which our servers may not be able to keep up
@@ -71,7 +71,7 @@ balancer can shut down some servers to save on running costs.
     * Cheaper and more cost-effective
     * Open source solutions are available (HAProxy, Nginx)
 
-![types of load balancers](load-balancers-2.png)
+![types of load balancers](assets/load-balancers-2.png)
 
 ### Load balancing strategies
 
@@ -79,7 +79,7 @@ balancer can shut down some servers to save on running costs.
    Each server gets one request in each turn and once we send at least one request to each server, we start over.
    Assuming all requests cause the same amount of load in any given server and that all the servers are identical, this
    guarantees a uniform load distribution through our entire cluster. <br/>
-   ![uniform round robin](round-robin-uniform-load.jpg) <br/>
+   ![uniform round robin](assets/round-robin-uniform-load.jpg) <br/>
 2. **Weighted Round Robin** <br />
    If some of our servers are more capable of taking higher load or if we intentionally want to direct more traffic to
    some servers and less to others, we can use this strategy. We assign a higher weight to service we want to send more
@@ -87,13 +87,13 @@ balancer can shut down some servers to save on running costs.
    In the below example, the top server will receive only one out of every 10 incoming requests whereas the rest of the
    servers are weighted 3 times higher, which would spread the remaining 90% of the traffic equally among those
    servers. <br />
-   ![weighted round robin](round-robin-weighted.jpg) <br/>
+   ![weighted round robin](assets/round-robin-weighted.jpg) <br/>
    Weighted round-robin can help not only if we have hardware asymmetry, but also if we want to release newer version of
    our application software more gradually by upgrading only one of the servers to the new version and direct only a
    small portion of the traffic to that staging host. Later when we are confident to roll this new version to the entire
    cluster, we can upgrade the remaining servers but if something went wrong in this new version then the impact is
    going to be much smaller. <br />
-   ![newer server version](round-robin-server-version.jpg) <br/>
+   ![newer server version](assets/round-robin-server-version.jpg) <br/>
 3. **Source IP Hash**
     * Sometimes it's desired that the user continues communication with the same server
     * _Examples:_
@@ -127,19 +127,19 @@ load.
 4. **Least Connections** <br />
    Servers which already have many open connections are assumed to be more busy handling requests and therefore will
    receive less additional requests than server that have fewer open connections. <br />
-   ![least connections](least-connections.jpg)
+   ![least connections](assets/least-connections.jpg)
 5. **Weighted Response Time** <br />
    Takes advantage of the periodic health check requests the load balancer sends to the servers and measures the time
    each server takes to respond. If the server is busy handling real requests, it would take it longer to respond to
    those health checks which would give the server a lower weight in the load balancing algorithm.
-   ![weighted response](weighted-response.jpg)
+   ![weighted response](assets/weighted-response.jpg)
 6. **Agent Based Policy** <br />
    More active approach by installing a special agent program on each of the application servers. This agent background
    process can measure the CPU utilization, Inbound or outbound Network Traffic(bytes), Disk Operations (Reads/Writes),
    Memory Utilization... Others custom metrics. These agents can report those metrics in real time to the load balancer
    which will help it make the most informed decisions regarding the best way direct the traffic to our application
    nodes. <br />
-   ![agent based policy](agent-based-policy.jpg)
+   ![agent based policy](assets/agent-based-policy.jpg)
 
 **Example**
 

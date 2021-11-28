@@ -37,7 +37,7 @@ its own address and replace the destination address with the backend servers add
 the request to. For every TCP packet the server sends back, the load balancer needs to replace source address with its
 own again and replace the destination IP and port back to the users IP and port. This way the user never knows any
 details about the actual servers address that handled its request. <br />
-![layer 4 load balancing](layer-4-response-LB.jpg)
+![layer 4 load balancing](assets/layer-4-response-LB.jpg)
 
 ### Layer 7 (Application) Load Balancing
 
@@ -54,18 +54,18 @@ _**Video Streaming web based service - Layer 7 Load Balancing Routing**_ <br />
 The general request to load the websites text and images can be routed by the load balancer to the general WebApp server
 cluster. When routing the request to this backend cluster, we may choose a strategy like round-robin for balancing the
 load among the individual servers. <br />
-![layer 7 load balancing-1](layer-7-LB-1.jpg)
+![layer 7 load balancing-1](assets/layer-7-LB-1.jpg)
 
 Later when a user wants to search for a particular movie, the load balancer would route the request to our search
 compute cluster where we can maintain a different load balancing strategy such as the least connections'
 strategy. <br />
-![layer 7 load balancing-2](layer-7-LB-2.jpg)
+![layer 7 load balancing-2](assets/layer-7-LB-2.jpg)
 
 Finally, when the user sends a request to start streaming the actual movie, the load balancer may route the request to
 our dedicated video cluster. For this cluster we may use the combination of the users cookie and the source IP hash
 strategy to maintain a continuous connection between the user and a particular server throughout the entire streaming
 session. <br />
-![layer 7 load balancing-3](layer-7-LB-3.jpg)
+![layer 7 load balancing-3](assets/layer-7-LB-3.jpg)
 
 **Example 2** <br />
 We are building a restaurant business that takes food orders from users and directs those orders to our specialized
