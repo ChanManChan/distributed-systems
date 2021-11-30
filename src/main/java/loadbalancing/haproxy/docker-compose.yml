@@ -1,0 +1,30 @@
+version: '3.4'
+
+services:
+  app1:
+    build: .
+    container_name: app1
+    command: 9001 "Server 1"
+    ports:
+      - "9001:9001"
+
+  app2:
+    build: .
+    container_name: app2
+    command: 9002 "Server 2"
+    ports:
+      - "9002:9002"
+
+  app3:
+    build: .
+    container_name: app3
+    command: 9003 "Server 3"
+    ports:
+      - "9003:9003"
+
+  haproxy:
+    build: ./lbconfig
+    container_name: haproxy
+    ports:
+      - "80:80"
+      - "83:83"
