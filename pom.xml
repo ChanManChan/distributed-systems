@@ -54,7 +54,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>loadbalancing/haproxy/Application</mainClass>
+                            <mainClass>distributedsearch/Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
