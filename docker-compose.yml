@@ -23,7 +23,7 @@ services:
       - "9003:9003"
 
   haproxy:
-    build: ./lbconfig
+    build: src/main/java/loadbalancing/haproxy/lbconfig
     container_name: haproxy
     ports:
       - "80:80"
