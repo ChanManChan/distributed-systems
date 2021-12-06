@@ -68,3 +68,72 @@ messages to our topic will be load balanced among all the consumers within that 
 ![kafka pubsub](assets/pubsub.jpg) <br />
 We can place each consumer in a different consumer group which means every message published to a topic will be
 delivered to all the consumers.
+
+### Kafka Performance and Scalability
+
+**Kafka Brokers & Topic Partitions** <br />
+![kafka single message broker](assets/single-message-broker.jpg) <br />
+A naive implementation of a message broker would be to have a single instance managing a topic running on a single
+machine. In this approach, aside from the message broker being a single point of failure, there is no way to
+horizontally scale our topic. The message brokers parallelism is limited by the number of cores on the machine and the
+entire topic has to fit on a single computers' memory. <br />
+![kafka multiple message brokers](assets/multiple-message-broker.jpg) <br />
+That's why Kafka allows us to divide a topic into multiple partitions instead of just having one monolithic topic. This
+way we can launch more broker instances on separate machines and distribute a topic across those brokers by splitting
+the partition ownership equally among them. Of-course we lose the global ordering of the messages within the topic and
+have to compromise on ordering only within each partition. That is a trade-off we pay of achieving high
+scalability. <br />
+![kafka message broker scalability](assets/message-broker-scalability.jpg) <br />
+We could initially start with a large number of partitions and a few brokers and add new brokers as necessary to spread
+the load of the messages published to that topic. This is a good practice if we start with a small load but anticipate
+to grow it over time. <br />
+_So essentially from a publisher perspective:_
+
+* Number of partitions in a topic ~= maximum unit of parallelism for a Kafka Topic
+* We can estimate the right number of partitions for a topic given our expected peak message rate/volume for every topic
+  in the system
+* By adding more message brokers we can increase the Kafka topics' capacity, transparently to the publishers.
+
+**Consumers & Topic Partitions** <br />
+![partitions consumed](assets/partitions-consumed.jpg) <br />
+From a consumption point of view, Kafka partitions are divided among the consumer instances within each consumer group.
+This way each consumer instance handles a fair share of the topic partitions. And as we add more consumers into the
+group, the share of partitions each consumer has to consume from gets smaller.
+
+_Thanks to the partitioning of a Topic:_
+
+* We can have many broker instances working in parallel to handle incoming messages
+* And having many consumers, consuming in parallel from the same topic
+
+### Kafka Fault Tolerance
+
+If one broker instance fails we can lose the entire partition with all its data. So each Kafka Topic is configured with
+a replication factor. A replication factor of N means each partition of the topic is replicated by N Kafka brokers. For
+each partition, only one broker acts as a partition leader, other brokers are partition followers. The leader takes all
+the reads and writes to and from that partition. The followers replicate the partition data to say in sync with the
+leader and are passively standing ready to replace the leader if the leader fails. <br />
+**For Example**:- <br />
+![replication factor](assets/replication-factor.jpg) <br />
+With a topic with 4 partitions managed by 4 brokers and a replication factor of two, each partition will be replicated
+to two different brokers. And for each partition there would be only one broker that acts as a leader and will handle
+all the writes and reads. And one follower for backup that would stay in sync leader at all times and be ready to take
+over if needed. <br />
+The higher replication factor the more failures our system can tolerate. But more replication means more space is taken
+away from the system just for redundancy. The replication is configured on per topic basis. Kafka tried its best to
+spread the partitions and leadership fairly among the brokers for maximum efficiency. Kafka is using Apache Zookeeper
+for all its coordination logic. Kafka is using Zookeeper as a registry for brokers to publish the information about
+their address as well as the topics they manage, as well as for monitoring and failure detection using the techniques
+like ephemeral znodes and watchers. <br />
+![kafka distributed system](assets/kafka-distributed-system.jpg) <br />
+Kafka persists all its messages on disk. Even after messages are consumed by the consumers, the records still stay
+within Kafka partitions for a configurable period of time. This not only allows new consumers to join and consume older
+messages, but it also allows the consumers that failed in the process of reading/processing a message to retry the
+operation without losing any data. Failed brokers can recover and resume their operation almost instantaneously and
+catch up with the rest of the cluster very fast.
+
+**Summary**:- <br />
+
+1. Topic partitioning allows us:
+    * Scale a topic horizontally across multiple brokers and multiple machines
+    * Redundancy and replication allows us to achieve fault tolerance
+2. Persistence to disk enables log replays, as well as fast Kafka brokers' recovery
