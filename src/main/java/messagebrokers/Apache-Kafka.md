@@ -131,6 +131,41 @@ messages, but it also allows the consumers that failed in the process of reading
 operation without losing any data. Failed brokers can recover and resume their operation almost instantaneously and
 catch up with the rest of the cluster very fast.
 
+**Question 1:** <br />
+We have a large Restaurant Distributed System with multiple Consoles where waiters can place their customers' orders.
+The orders go to a cluster of Kafka Brokers with 2 topics. Topic 1 has two partitions Topic 2 has only one partition
+
+![question 1](assets/question-1.png) <br />
+Customers usually come very hungry. If party A placed an order before party B, but party B received their food before
+party A. The customers of party A would get furious. However after the meal, customers that order beverages, usually
+don't care about the time order of delivery. Which Kafka Topic should be the Kitchen, and Which Kafka Topic should be
+the Bar? <br />
+Topic 1 - Bar <br />
+Topic 2 - Kitchen <br />
+The order of messages is retained only within a single partition, so a topic with one partition is more suitable for the
+Kitchen service rather than the bar.
+
+**Question 2:** <br />
+We are building a Banking Service. In this service, bank transactions are placed by users, and are sent to our Kafka
+Transactions Topic. <br />
+![question 2](assets/question-2.png) <br />
+We want to make sure that each transaction is consumed by the Account Service, as well as logged by the Transaction
+Logging Service, for reporting and auditing purposes. How should we configure our consumer services? <br />
+We should place each consumer (Account Service and Transaction Logging Service) into a separate consumer group. This way
+each message in the Transactions' topic will be delivered to each of the consumers. This is equivalent to pub/sub
+pattern.
+
+**Commands** <br />
+
+```Shell
+./zookeeper-server-start.sh ../config/zookeeper.properties
+./kafka-server-start.sh ../config/server.properties
+./kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 -topic chat
+./kafka-topics.sh --list --bootstrap-server localhost:9092
+./kafka-console-producer.sh --broker-list localhost:9092 --topic chat
+./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic chat --from-beginning
+```
+
 **Summary**:- <br />
 
 1. Topic partitioning allows us:
