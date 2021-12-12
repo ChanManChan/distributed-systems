@@ -162,6 +162,7 @@ pattern.
 ./kafka-server-start.sh ../config/server.properties
 ./kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 -topic chat
 ./kafka-topics.sh --list --bootstrap-server localhost:9092
+./kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic purchases
 ./kafka-console-producer.sh --broker-list localhost:9092 --topic chat
 ./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic chat --from-beginning
 ```
