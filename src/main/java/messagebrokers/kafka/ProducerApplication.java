@@ -7,13 +7,16 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
-public class Application {
+public class ProducerApplication {
     private static final String TOPIC = "events";
     // If you're running your Apache Kafka brokers using WSL2 and want to connect Java service to your brokers, you may run into some errors due to misconfigurations.
     // For instance, trying to connect to "localhost:9092" or "127.0.0.1:9092" will not work.
     // Solution - IPv6
     // Use IPv6 loopback address in your broker (server.properties)
     // listeners=PLAINTEXT://[::1]:9092
+    // if it still doesn't work try restarting wsl
+    // wsl -l -v
+    // wsl --shutdown
     private static final String BOOTSTRAP_SERVERS = "[::1]:9092,[::1]:9093,[::1]:9094";
 
     public static void main(String[] args) {
