@@ -1,0 +1,13 @@
+john1967 Germany 110
+msmith2015 California 50
+tom_stevens12 England 1000
+jimliang1988 Ireland 70
+arthur_wilson India 5.99
+mary_johson98 Japan 44.50
+smith_teresa Spain 800
+andrewb1999 Turkey 745.70
+cameron-dion Florida 100
+arjun4444 Canada 99.95
+rehansh_jk2001 Netherlands 7.50
+mia_fisher Italy 150
+annabecker_1997 Brazil 90
