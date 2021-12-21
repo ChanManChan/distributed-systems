@@ -27,7 +27,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.10.1</version>
+            <version>2.13.0</version>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
@@ -53,6 +53,7 @@
     </dependencies>
 
     <build>
+        <finalName>account_manager</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -75,7 +76,11 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>distributedsearch/Application</mainClass>
+<!--                            <mainClass>distributedsearch/Application</mainClass>-->
+                            <mainClass>messagebrokers/banking/account_manager/Application</mainClass>
+<!--                            <mainClass>messagebrokers/banking/banking_api_service/Application</mainClass>-->
+<!--                            <mainClass>messagebrokers/banking/reporting_service/Application</mainClass>-->
+<!--                            <mainClass>messagebrokers/banking/user_notification_service/Application</mainClass>-->
                         </manifest>
                     </archive>
                     <descriptorRefs>

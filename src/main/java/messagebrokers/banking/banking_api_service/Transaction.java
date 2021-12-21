@@ -36,6 +36,10 @@ public class Transaction {
                 '}';
     }
 
+    /**
+     * Kafka Serializer implementation.
+     * Serializes a Transaction to JSON, so it can be sent to a Kafka Topic
+     */
     public static class TransactionSerializer implements Serializer<Transaction> {
         @Override
         public byte[] serialize(String topic, Transaction data) {

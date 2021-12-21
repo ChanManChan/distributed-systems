@@ -20,19 +20,16 @@ public class Application {
 
     public static void consumeMessages(String topic, Consumer<String, Transaction> kafkaConsumer) {
         kafkaConsumer.subscribe(Collections.singletonList(topic));
-
         while (true) {
             ConsumerRecords<String, Transaction> consumerRecords = kafkaConsumer.poll(Duration.ofSeconds(1));
-
             if (consumerRecords.isEmpty()) {
                 // do something else
+            } else {
+                for (ConsumerRecord<String, Transaction> consumerRecord : consumerRecords) {
+                    approveTransaction(consumerRecord.value());
+                }
+                kafkaConsumer.commitAsync();
             }
-
-            for (ConsumerRecord<String, Transaction> consumerRecord : consumerRecords) {
-                approveTransaction(consumerRecord.value());
-            }
-
-            kafkaConsumer.commitAsync();
         }
     }
 

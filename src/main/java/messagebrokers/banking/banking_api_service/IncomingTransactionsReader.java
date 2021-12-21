@@ -7,7 +7,7 @@ import java.util.*;
  * Mocks an HTTP server that receives purchase transactions in real time
  */
 public class IncomingTransactionsReader implements Iterator<Transaction> {
-    private static final String INPUT_TRANSACTIONS_FILE = "/banking/user-transactions.txt";
+    private static final String INPUT_TRANSACTIONS_FILE = "banking/user-transactions.txt";
     private final List<Transaction> transactions;
     private final Iterator<Transaction> transactionIterator;
 

@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class UserResidenceDatabase {
-    private static final String USER_RESIDENCE_FILE = "/banking/user-residence.txt";
+    private static final String USER_RESIDENCE_FILE = "banking/user-residence.txt";
     private final Map<String, String> userToResidenceMap;
 
     public UserResidenceDatabase() {
