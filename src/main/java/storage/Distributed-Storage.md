@@ -209,3 +209,192 @@ Which column should we shard our table on? Which Sharding strategy should we use
 
 > We should shard on the year_of_birth column and use the Range Based Sharding Strategy. This way our table is going to be broken into smaller tables where users will more likely be born on the same or close by year.
 
+#### Dynamic Sharding with Consistent Hashing
+
+![dynamic cluster resizing](assets/dynamic_cluster_resizing.jpg)
+
+In the regular hash based strategy, we have N database shards or instances, and we need to allocate each record to a
+particular shard by applying a hash function on the records key modulo N (Shard = H(key) mod 4). What happens if we want
+to add another server to our database cluster. In this case the formula we used to allocate a record to a particular
+shard changes, so now queries from clients that look for a particular record by its key will not find the record in the
+right shard. And all the existing records will have to move to the right location according to the new sharding formula.
+And the same thing would happen if we want to remove a node from the cluster, we have to reshuffle a large number of
+keys not only from the node that is going to be removed but also from other nodes as well. <br />
+
+![asymmetric nodes](assets/asymmetric_nodes.jpg)
+
+The second problem is if not all the nodes in our cluster have the same capacity or CPU capabilities, in this case we
+would like to allocate more records to the more powerful nodes that maybe have more memory and can handle more
+concurrent reads while allocating fewer records to maybe older or less powerful nodes to make sure they don't crash.
+However, there is no way for us to achieve this using the standard hashing method. <br />
+To address these limitations of the regular hashing algorithm, we are going to introduce a new hashing algorithm
+designed specifically for such scenarios.
+
+**Consistent Hashing** <br />
+
+![consistent hashing 1](assets/consistent_hashing_1.jpg)
+
+The idea of consistent hashing is to hash not only the keys but also the nodes, and more importantly hash them all to
+the same hash space. We can use the nodes IP address or any other unique identifiers as keys to use in the hash
+function. In addition to hashing both the records keys and the nodes to the same space, we make the hash space
+continuous by turning it into a ring. All the keys whose values fall between particular nodes value and the previous
+nodes position on the ring belong to that particular node. <br />
+
+![consistent hashing 2](assets/consistent_hashing_2.jpg) <br />
+![consistent hashing 3](assets/consistent_hashing_3.jpg)
+
+For example, a key that falls into the 31st slot in the ring belongs to node 1 and will be stored on that node. And a
+key that maps to slot 57 on the ring will also reside on node 1. However, a key that maps to slot 58 will already belong
+to node 5 and all the keys that fall between slot 99 and slot 2 will be stored on node 2. <br />
+
+**Consistent Hashing Capabilities**
+
+* Uniform records distribution among all the distributed database nodes
+* But we already had that in the simple hashing strategy!
+* Consistent hashing allows us to dynamically add and remove nodes from the cluster without re-assigning too many keys
+  and hence moving fewer records. For example if we want to remove node 2 from the cluster all we need to do is assign
+  all the values in the ring that used to belong to that node to the next node, node 1. This way all the records that
+  used to reside on node 2 will be moved to node 1 and the rest of the records in the entire cluster remain
+  untouched. <br />
+  ![consistent hashing 4](assets/consistent_hashing_4.jpg) <br />
+  Similarly, if we want to add a new node to the cluster whose hash value falls in slot 31, only the records in node 1
+  that hash to value between 99 and 31 will have to be moved to the new node. And again, other records with keys that
+  hash outside the new nodes boundaries will remain untouched.
+* Consistent Hashing - Virtual Nodes
+    * ![virtual nodes](assets/virtual_nodes.jpg)
+    * If some physical nodes are more powerful/have more capacity than other nodes, we can assign the stronger nodes
+      more keys.
+    * Method:
+        * Map each physical node -> one or more virtual nodes
+        * More powerful physical nodes -> many virtual nodes
+        * Weaker/Smaller physical nodes -> single or fewer virtual nodes
+    * We can build robust database clusters with existing hardware with no need for additional expenses.
+    * For example, if we have 3 physical nodes however node 1 twice as powerful as node 0 and node 2 is 3 times as
+      powerful as node 0. We can map node 0 to 1 virtual node, node 1 to 2 virtual nodes and node 2 to 3 virtual nodes.
+      And now statistically there is a higher chance for a key to belong to node 2 than to node 1. And there is a higher
+      chance for a key to belong to node 1 than to node 0.
+
+**Consistent Hashing with multiple hash functions** <br />
+
+![uneven distribution](assets/uneven_distribution.jpg)
+
+Because we have just a small number of nodes, we may end up in a situation where after applying a hash function, for
+example on our cluster nodes IP addresses, a disproportionally large portion of the hash space values map to one of the
+nodes and a disproportionally small portion is allocated to another node. Statistically this means that much more
+records will end up in node 1 than in node 0. This type of uneven load distribution can make node 1 a performance
+bottleneck while leaving node 0 underutilized. <br />
+
+![multiple hash functions 1](assets/multiple_hash_functions_1.jpg)
+
+The solution to such an unlucky hash function result and an uneven load distribution is not use not one but multiple
+hash functions on each node. Using multiple hash functions, each node will be mapped to multiple locations on the hash
+space ring. We create an illusion of having more nodes than we actually have. Statistically it distributes the load more
+evenly among the physical nodes. <br />
+
+![multiple hash functions 2](assets/multiple_hash_functions_2.jpg)
+
+For example, with 3 nodes and this time we will use not one but two hash functions for each of those nodes. Using the
+first hash function, we map node 0 to slot 99, node 1 to slot 60 and node 2 to slot 65. Now if we stopped right here, we
+already see that node 1 has way more keys to handle than node 2. However now we repeat the same process with hash
+function number 2 which maps node 0, node 1 and node 2 to different slots since it's a different mathematical
+transformation. And now if we look at the keys' allocation on the nodes, we have a much better picture. Now each node
+has a portion of the keys from different ranges and there is less chance that a single node will be disproportionally
+overloaded or underutilized. <br />
+
+**Summary** <br />
+
+* Using consistent hashing we mapped database records and DB shards (database instances) to the same hashing space
+* This allowed us to scale our distributed DB both up and down with minimal impact on other nodes and records.
+* We were able to address the capacity imbalance in our cluster and design a scalable sharded distributed DB with a mix
+  of servers with different hardware capabilities.
+* We used multiple hash functions to achieve a better load distribution and avoid performance bottlenecks in our
+  distributed database.
+
+_Question_
+Consistent Hashing is a technique to map both the keys of our data and the database nodes that store that data to the
+same hash space. What is the benefit of doing so?
+
+* Using consistent hashing we can dynamically add and remove database nodes from our database cluster, without
+  reallocating all the keys to the new set of nodes.
+* Using consistent hashing we can allocate more keys to some database nodes and fewer keys to other nodes (using the
+  virtual nodes' technique).
+* Using consistent hashing we can spread the keys of our data more evenly across the database nodes (by using multiple
+  hash functions)
+
+### Database Replication, Consistency Models & Quorum Consensus
+
+#### Replication vs Sharding
+
+**Motivation - High Availability** <br />
+First and the biggest reason why we want to replicate our data in a distributed database is to achieve high
+availability. If we store all our data on a single machine and the communication to that machine breaks down, for
+example due to a router failure, our business will not be able to operate until that node becomes available again. So if
+we keep copy of all our data on a separate machine, then if the main database instance or master is unavailable, we can
+still have access to the data residing on the replica and our business can continue operating.
+
+**Motivation - Fault Tolerance** <br />
+If this time it's not the router that failed but the database instance disk or cpu, then having the data in one place
+will result in a complete and unrecoverable data loss. So having a copy of our data on a different machine serves as a
+backup to ensure we never lose any of our data.
+
+**Motivation - Scalability/Performance** <br />
+Data replication particularly shines in a read intensive work load. For example, if we have a relatively small dataset
+that can fit on a single instance, but we have a very large number of clients that read data from the database, a single
+node will just not be able to handle such a large number of concurrent reads. So through full data replication, the load
+on each replica is much smaller, and we can support a much higher throughput and number of concurrent readers. Handling
+concurrent writes to a replicated database is a bit more complex.
+
+#### Replicated Database Architectures
+
+**Master - Slave Architecture**
+In this architecture, all the write operations go to the master and the read operations go to the slave. Every write
+operation to the master is propagated to the slave so that the slave always contains an identical copy of the data on
+the master. And if the master fails for any reason, the slave is ready to take over and assume the role of the master to
+keep the system running. At some point a single writer is no longer enough for us, so we move to the master-master
+architecture.
+
+**Master - Master Architecture**
+Each node can take both reads and writes and every write is propagated to other nodes for consistency. In this
+architecture, all the nodes are identical in their role, and we can grow our database cluster to as many nodes as
+necessary.
+
+#### Database consistency models
+
+**Master - Slave architecture - writes**
+If a particular client writes to the master and gets an acknowledgment before the write was propagated to the replica
+and then reads the same record immediately it will see an old value. This situation makes our database temporarily
+inconsistent. However, eventually the new value will be propagated to all the replicas and our database will become
+consistent again.
+
+_Eventual Consistency_
+
+* In this model, if no further updates are made, eventually all readers will have access to the newest data.
+* However temporarily some readers may see stale data.
+* Provides lower latency and higher availability. Since we can respond to reads and acknowledge writes without waiting
+  for an update to propagate to the entire cluster.
+* Good choice for systems that do not need to have the most up-to-date data across the board.
+* Examples:
+    * Posts/Updates to social media profile
+    * Analytics for product rating and number of reviews
+
+_Strict Consistency_
+
+* We can force strict consistency by forcing the writer to wait until the master finishes replicating the new value to
+  the slave before the writer can assume that write was successful. This guarantees strict consistency but slows down
+  the write operations.
+* In Strict consistency, the writer will not get an acknowledgement until we can guarantee that all the readers will see
+  the new data.
+* Slows down operations and limits system's availability (if some replicas are temporarily not accessible)
+* Essential for systems that need to be consistent across all the services
+* Examples:
+    * User's account balance
+    * Number of items in a store's inventory
+    * Available/Booked seats in a theater
+
+We were able to force strict consistency in a simple 2 node master-slave architecture however how would we do it in a
+fully distributed and symmetric master-master architecture where each node can take both reads and writes.
+
+**Strict Consistency - Attempt 1**
+We can try to force each write to wait until the data propagates to all the nodes as before but that is very
+problematic. In the best scenario, it is just going to be a very slow write. But in the worst scenario, the write will
+time out if just one node of our many nodes is currently unavailable.
