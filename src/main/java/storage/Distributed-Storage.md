@@ -324,6 +324,10 @@ same hash space. What is the benefit of doing so?
 ### Database Replication, Consistency Models & Quorum Consensus
 
 #### Replication vs Sharding
+| Sharding                                                           | Replication                                                                               |
+|--------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| _Splitting_ the data and placing each chunk on a different machine | Creating identical _copies_ of all the data, and placing each copy on a different machine |
+| _No_ redundancy                                                    | _Full_ redundancy                                                                         |
 
 **Motivation - High Availability** <br />
 First and the biggest reason why we want to replicate our data in a distributed database is to achieve high
@@ -347,6 +351,9 @@ concurrent writes to a replicated database is a bit more complex.
 #### Replicated Database Architectures
 
 **Master - Slave Architecture**
+
+![master slave architecture](assets/master_slave.jpg)
+
 In this architecture, all the write operations go to the master and the read operations go to the slave. Every write
 operation to the master is propagated to the slave so that the slave always contains an identical copy of the data on
 the master. And if the master fails for any reason, the slave is ready to take over and assume the role of the master to
@@ -354,6 +361,9 @@ keep the system running. At some point a single writer is no longer enough for u
 architecture.
 
 **Master - Master Architecture**
+
+![master master architecture](assets/master_master.jpg)
+
 Each node can take both reads and writes and every write is propagated to other nodes for consistency. In this
 architecture, all the nodes are identical in their role, and we can grow our database cluster to as many nodes as
 necessary.
@@ -361,6 +371,9 @@ necessary.
 #### Database consistency models
 
 **Master - Slave architecture - writes**
+
+![master slave inconsistency](assets/master_slave_inconsistency.jpg)
+
 If a particular client writes to the master and gets an acknowledgment before the write was propagated to the replica
 and then reads the same record immediately it will see an old value. This situation makes our database temporarily
 inconsistent. However, eventually the new value will be propagated to all the replicas and our database will become
@@ -379,11 +392,13 @@ _Eventual Consistency_
 
 _Strict Consistency_
 
+![strict consistency](assets/strict_consistency.jpg)
+
 * We can force strict consistency by forcing the writer to wait until the master finishes replicating the new value to
   the slave before the writer can assume that write was successful. This guarantees strict consistency but slows down
   the write operations.
-* In Strict consistency, the writer will not get an acknowledgement until we can guarantee that all the readers will see
-  the new data.
+* In Strict consistency, the writer will not get an acknowledgement that the write is successful until we can guarantee
+  that all the readers will see the new data.
 * Slows down operations and limits system's availability (if some replicas are temporarily not accessible)
 * Essential for systems that need to be consistent across all the services
 * Examples:
@@ -394,7 +409,110 @@ _Strict Consistency_
 We were able to force strict consistency in a simple 2 node master-slave architecture however how would we do it in a
 fully distributed and symmetric master-master architecture where each node can take both reads and writes.
 
-**Strict Consistency - Attempt 1**
+**Strict Consistency - Attempt 1** <br />
 We can try to force each write to wait until the data propagates to all the nodes as before but that is very
 problematic. In the best scenario, it is just going to be a very slow write. But in the worst scenario, the write will
 time out if just one node of our many nodes is currently unavailable.
+
+#### Quorum Consensus
+
+A more methodical solution to guarantee strict consistency is using the quorum consensus. First each records in our
+database in addition to the key and the records' data will also have a version. Every update to a record increments the
+version number to make sure we can distinguish between an older record and a newer record.
+
+**Quorum Consensus - Definitions** <br />
+**R** - _Minimum_ number of nodes a _reader_ needs to read from <br />
+**W** - _Minimum_ number of nodes a _writer_ needs to write to <br />
+**N** - Number of nodes in the database cluster
+
+> R + W > N  (Guarantees Strict Consistency)
+
+What the Quorum Consensus protocol dictates is if we chose R and W such that their sum is strictly greater than the
+number of nodes we have in the cluster (N), we are guaranteed to have a strict consistency in our distributed database.
+For example, if the number of nodes in our cluster is 5, and we chose the minimum number of nodes to read from to be 3
+and the minimum number of nodes to write to also be 3. Then we are guaranteed to have strict consistency because <br />
+<pre>
+N = 5
+R = 3
+W = 3
+R + W > N
+3 + 3 > 5
+</pre>
+
+However, if we chose the minimum number of nodes to read from to be 2 then we will only have eventual consistency in our
+database
+<pre>
+N = 5
+R = 2
+W = 3
+R + W > N
+2 + 3 !> 5
+</pre>
+
+The idea of Quorum is very simple, and it simply guarantees an overlap between the reads and the writes. For example:-
+<pre>
+N = 5
+R = 3
+W = 3
+R + W > N
+3 + 3 > 5
+</pre>
+
+![quorum consensus write](assets/quorum_consensus_write.jpg)
+
+A client wants to update the record X to a new value of 20, so it needs to pick 3 nodes to write to. So once it writes
+to the quorum of 3 nodes and updates the version of the record on those nodes, the write operation is considered
+successful. <br />
+
+![quorum consensus read](assets/quorum_consensus_read.jpg)
+
+Now if a reader wants to read from record X, since we chose the values of R and W so that their sum is greater than N,
+in the most unlucky pick of a read quorum of 3 the reader is still guaranteed to have an overlap with the recent write
+operation. When the reader gets the values and the versions of the records, the reader can see that the values do not
+match. At this point the reader can see that the version of X = 20 is more recent than the version of X = 10. Which must
+mean that 20 is the most up-to-date value of X.
+
+**Quorum - Optimizing for reads**
+
+![quorum consensus optimizing for reads](assets/optimizing_for_reads.jpg)
+
+To optimize our database for reads, we can choose R to be 2 and W to be 4. With this choice, we still guarantee strict
+consistency and in the worst case we still have an overlap between past writes and newer reads. However now the readers
+needs to pick only 2 nodes to read from which makes the readers faster on the expense of the slower writes that now need
+to write to at least 4 different nodes. <br />
+
+![quorum consensus high availability](assets/quorum_consensus_high_availability.jpg)
+
+If we pick R and W right we even have high availability since we have room for some nodes to fail. For example, If we
+use the same values for R and W as before (R = 2, W = 4, N = 5), the read clients still have enough nodes to choose from
+to achieve a read quorum of 2. And the write clients still have enough nodes to pick for a write quorum of 4. <br />
+
+**Quorum Consensus - Over Optimization**
+
+![quorum consensus over optimization](assets/over_optimization.jpg)
+
+However, if we go too far with optimizing for reads for example (R = 1, W = 5, N = 5), and we choose the read quorum to
+be 1, that forces to us to have at least 5 write nodes in the write quorum. That allows the read client to read from
+only one node and get the most up-to-date value but does not leave us any room for nodes to fail since a successful
+write needs the entire cluster to be available.
+
+**Summary**
+
+* Data replication in distributed databases
+* Data replication architectures:
+    * Master - Slave architecture (Write operations only go to one node and read operations go to the slave replicas)
+    * Master - Master architecture (All the nodes are identical and both read and write operations can go to any of the
+      nodes)
+* Consistency Models
+    * Strict Consistency
+    * Eventual Consistency
+* Quorum Consensus - To guarantee strict consistency in any replication architecture.
+    * Optimizing for reads or writes
+    * Choosing R and W for high availability
+* When building a Distributed Database we don't need to choose between
+    * Replication
+    * Sharding
+* Most Distributed Databases use a combination of both _sharding_ and _replication_ to achieve
+    * High Scalability
+    * Availability
+    * Fault Tolerance
