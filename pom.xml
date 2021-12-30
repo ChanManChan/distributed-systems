@@ -50,10 +50,15 @@
             <version>1.2.17</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver</artifactId>
+            <version>3.4.3</version>
+        </dependency>
     </dependencies>
 
     <build>
-        <finalName>account_manager</finalName>
+        <finalName>online_school</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -76,11 +81,12 @@
                 <configuration>
                     <archive>
                         <manifest>
-<!--                            <mainClass>distributedsearch/Application</mainClass>-->
-                            <mainClass>messagebrokers/banking/account_manager/Application</mainClass>
-<!--                            <mainClass>messagebrokers/banking/banking_api_service/Application</mainClass>-->
-<!--                            <mainClass>messagebrokers/banking/reporting_service/Application</mainClass>-->
-<!--                            <mainClass>messagebrokers/banking/user_notification_service/Application</mainClass>-->
+                            <!--                            <mainClass>distributedsearch/Application</mainClass>-->
+                            <!--                            <mainClass>messagebrokers/banking/account_manager/Application</mainClass>-->
+                            <!--                            <mainClass>messagebrokers/banking/banking_api_service/Application</mainClass>-->
+                            <!--                            <mainClass>messagebrokers/banking/reporting_service/Application</mainClass>-->
+                            <!--                            <mainClass>messagebrokers/banking/user_notification_service/Application</mainClass>-->
+                            <mainClass>storage/school/Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
